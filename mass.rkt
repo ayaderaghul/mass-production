@@ -54,6 +54,7 @@
 (define (m) (vector 1 (list 1 1 1 1 1 1 1 1 1 1)))
 (define (l) (vector 0 (list 0 0 0 0 0 0 0 0 0 0)))
 (define (a) (vector 1 (list 1 0 1 2 0 1 2 0 1 2))) ; accommodator
+(define (la) (vector 0 (list 1 2 2 2 0 1 2 0 0 0)))
 
 (define M 10) ; how many machines to mass produce?
 
@@ -87,7 +88,6 @@
   (for/list ([n (in-range p1 (add1 p2))])
     (create-machine n)))
 
-`(define A (mass-produce M))
 
 ;; in this world, do they need name?
 ;; their name = their position in A (litterally)
@@ -227,7 +227,6 @@
                      (list-ref auto-list j)
                      rounds))))
 
-`(define P (mass-match A 50))
 
 (define (pack-pay pay-list)
   (for/list ([n M])
@@ -276,6 +275,12 @@
   (remove* '(#f) (map (lambda (x) (compare x l2)) l1)))
 
 
+(define (dominate? l1 l2)
+  (length
+   (remove* '(#t)
+            (for/list ([n (length l1)])
+              (> (list-ref l1 n)
+                 (list-ref l2 n))))))
 
 ;; data:
 ;; '((1 2..)
@@ -291,3 +296,38 @@
 (define (import-csv filename)
   (map (lambda (a-list) (map string->number a-list))
        (read-csv-file filename)))
+
+(define P (import-csv "500matches"))
+(define (468? n) (= 468 n))
+(define (n->nstring n a-string)
+  (string->symbol (string-append
+                  (number->string n)
+                  a-string)))
+(define (n->ndominate? n)
+  (n->nstring n "dominate?"))
+(define (n->ndominate-all? n)
+  (n->nstring n "dominate-all?"))
+(define (n->pn n)
+  (string->symbol (string-append
+                   "P"
+                   (number->string n))))
+(define Ps
+  (for/list ([n (length P)])
+    `(define ,(n->pn n)
+          (list-ref P ,n))))
+(map eval Ps)
+(define D?
+  (for/list ([n (length P)])
+    (list 'define (list (n->ndominate? n) 'a-list)
+          (list 'dominate? (n->pn n) 'a-list))))
+(map eval D?)
+
+(define D-all?
+  (for/list ([n (length P)])
+    `(define (,(n->ndominate-all? n) a-list)
+          (map ,(n->ndominate? n) a-list))))
+(map eval D-all?)
+
+(define (counts n1 n2)
+  (for/list ([i (in-range n1 (add1 n2))])
+    (count 468? ((eval (n->ndominate-all? i)) P))))
