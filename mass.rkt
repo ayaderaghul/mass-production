@@ -307,10 +307,15 @@
   (n->nstring n "dominate?"))
 (define (n->ndominate-all? n)
   (n->nstring n "dominate-all?"))
-(define (n->pn n)
+(define (n->stringn a-string  n)
   (string->symbol (string-append
-                   "P"
+                   a-string
                    (number->string n))))
+(define (n->pn n)
+  (n->stringn "P" n))
+(define (n->dn n)
+  (n->stringn "D" n))
+
 (define Ps
   (for/list ([n (length P)])
     `(define ,(n->pn n)
@@ -327,6 +332,13 @@
     `(define (,(n->ndominate-all? n) a-list)
           (map ,(n->ndominate? n) a-list))))
 (map eval D-all?)
+
+(define Ds
+  (for/list ([n (length P)])
+    `(define ,(n->dn n)
+      (,(n->ndominate-all? n) P))))
+
+
 
 (define (counts n1 n2)
   (for/list ([i (in-range n1 (add1 n2))])
