@@ -1,4 +1,7 @@
 (require math) ; to have mean
+(require 2htdp/batch-io)
+(require "csv.rkt")
+
 
 ;; this is the format of a machine
 ;; #(h (h h h h h h h h h h))
@@ -77,9 +80,12 @@
 ;; we append into each body  a place-holder (head)
 ;; which holds  current (or previous) strategy
 
-(define (mass-produce p)
-  (for/list ([n p])
-    (vector 0 (separate-string (create-body n)))))
+(define (create-machine a-num)
+  (vector 0 (separate-string (create-body a-num))))
+
+(define (mass-produce p1 p2)
+  (for/list ([n (in-range p1 (add1 p2))])
+    (create-machine n)))
 
 `(define A (mass-produce M))
 
@@ -234,3 +240,54 @@
     (lambda (output-port)
       (write txt output-port))
     #:exists 'append))
+
+(define rounds 100)
+
+(define (match-H auto)
+  (mean-pay first (match-auto auto (h) rounds)))
+(define (match-A auto)
+  (mean-pay first (match-auto auto (a) rounds)))
+(define (match-L auto)
+  (mean-pay first (match-auto auto (l) rounds)))
+
+(define (match-itself auto)
+  (mean-pay first (match-auto auto auto rounds)))
+
+(define (real->decimal a-num)
+  (string->number (real->decimal-string a-num)))
+
+(define (match-Hs a-list)
+  (map exact->inexact (map match-H a-list)))
+(define (match-As a-list)
+  (map exact->inexact (map match-A a-list)))
+(define (match-Ls a-list)
+  (map exact->inexact (map match-L a-list)))
+(define (match-itselfs a-list)
+  (map exact->inexact (map match-itself a-list)))
+
+(define (mixed-equi a-list)
+  (map list
+       (match-Hs a-list)
+       (match-As a-list)))
+
+(define (compare n a-list)
+  (findf (lambda (x) (= n x)) a-list))
+(define (compare-list l1 l2)
+  (remove* '(#f) (map (lambda (x) (compare x l2)) l1)))
+
+
+
+;; data:
+;; '((1 2..)
+;;   (2 3..))
+;; map list data..
+
+(define (out-data filename data)
+  (define out (open-output-file filename #:mode 'text #:exists 'append))
+  (write-table data out)
+  (close-output-port out))
+
+;; import csv
+(define (import-csv filename)
+  (map (lambda (a-list) (map string->number a-list))
+       (read-csv-file filename)))
